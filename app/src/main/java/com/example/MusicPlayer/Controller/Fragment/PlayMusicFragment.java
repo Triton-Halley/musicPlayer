@@ -10,9 +10,8 @@ import android.os.Bundle;
 import androidx.annotation.RequiresApi;
 import androidx.fragment.app.Fragment;
 
-import android.os.Environment;
+import android.os.Handler;
 import android.os.Parcelable;
-import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,14 +22,14 @@ import android.widget.TextView;
 
 import com.example.MusicPlayer.Model.Music;
 import com.example.MusicPlayer.R;
-import com.mikhaellopez.circularimageview.CircularImageView;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+
+import static java.lang.Thread.sleep;
 
 
 public class PlayMusicFragment extends Fragment {
@@ -45,11 +44,12 @@ public class PlayMusicFragment extends Fragment {
     private ImageView mImageView;
     private MediaPlayer mMediaPlayer;
     private Music mMusic;
-    private Thread updateSeekbar;
-    private int position  ;
+    private int position;
     private List<Music> mMusicList;
     private int pauseCurrentPosition;
-    private TextView mMusicName ;
+    private TextView mMusicName;
+    private Handler mHandler = new Handler();
+
     public PlayMusicFragment() {
         // Required empty public constructor
     }
@@ -61,7 +61,7 @@ public class PlayMusicFragment extends Fragment {
         Bundle args = new Bundle();
         args.putParcelable("ARGS_MUSIC", music);
         args.putParcelableArrayList("ARGS_MUSIC_LIST", (ArrayList<? extends Parcelable>) musicList);
-        args.putInt("ARGS_MUSIC_POS",pos);
+        args.putInt("ARGS_MUSIC_POS", pos);
         fragment.setArguments(args);
         return fragment;
     }
@@ -82,15 +82,16 @@ public class PlayMusicFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_play_music, container, false);
         findViews(view);
         mMusicName.setText(mMusic.getMusicName());
+
         setListener();
+
         listener();
 
         return view;
     }
 
-//    @RequiresApi(api = Build.VERSION_CODES.M)
+    //    @RequiresApi(api = Build.VERSION_CODES.M)
     private void startSeekBar() {
-        updateSeekbar.start();
         mSeekBar.getProgressDrawable().setColorFilter(getResources().getColor(R.color.seekBarColor),
                 PorterDuff.Mode.MULTIPLY);
         mSeekBar.getThumb().setColorFilter(getResources().getColor(R.color.seekBarColor),
@@ -102,7 +103,7 @@ public class PlayMusicFragment extends Fragment {
     private void findViews(View view) {
         play = view.findViewById(R.id.play_pause);
         next = view.findViewById(R.id.next);
-        previous=view.findViewById(R.id.previous);
+        previous = view.findViewById(R.id.previous);
         mMusicName = view.findViewById(R.id.music_name);
         mSeekBar = view.findViewById(R.id.music_Seekbar);
         mImageView = view.findViewById(R.id.circularImageView);
@@ -134,10 +135,10 @@ public class PlayMusicFragment extends Fragment {
                     startSeekBar();
                     automaticPlay();
                 } else if (mMediaPlayer.isPlaying()) {
+                    mHandler.removeCallbacks(update);
                     play.setBackgroundResource(R.drawable.baseline_play_arrow_black_18);
                     pauseCurrentPosition = mMediaPlayer.getCurrentPosition();
                     mSeekBar.setMax(mMediaPlayer.getDuration());
-                    updateSeekbar();
                     mMediaPlayer.pause();
                 }
             }
@@ -149,7 +150,7 @@ public class PlayMusicFragment extends Fragment {
 
                 mMediaPlayer.stop();
                 mMediaPlayer.release();
-                position = (position+1)%mMusicList.size();
+                position = (position + 1) % mMusicList.size();
                 Uri musicUri = mMusicList.get(position).getMusicUri();
                 Uri coveMusic = Uri.parse(MediaMetadata.METADATA_KEY_ALBUM_ART_URI);
                 mImageView.setImageURI(coveMusic);
@@ -166,7 +167,7 @@ public class PlayMusicFragment extends Fragment {
             public void onClick(View v) {
                 mMediaPlayer.stop();
                 mMediaPlayer.release();
-                position = ((position-1)<0)?(mMusicList.size()-1):(position-1);
+                position = ((position - 1) < 0) ? (mMusicList.size() - 1) : (position - 1);
                 Uri coveMusic = Uri.parse(MediaMetadata.METADATA_KEY_ALBUM_ART_URI);
                 mImageView.setImageURI(coveMusic);
                 Uri musicUri = mMusicList.get(position).getMusicUri();
@@ -195,27 +196,27 @@ public class PlayMusicFragment extends Fragment {
         }
         return mMusic;
     }*/
-    private void updateSeekbar(){
-        updateSeekbar = new Thread(){
-            @Override
-            public void run() {
-                int totalDuration = mMediaPlayer.getDuration();
-                int currentPosition = 0 ;
-                while (currentPosition<totalDuration){
-                    try {
-                        sleep(500);
-                        currentPosition = mMediaPlayer.getCurrentPosition();
-                        mSeekBar.setProgress(currentPosition);
-                    }catch (InterruptedException e){
-                        e.printStackTrace();
-                    }
-                }
-            }
-        };
+    private Runnable update = new Runnable() {
+        @Override
+        public void run() {
+            updateSeekbar();
+//            long currentDuration = mMediaPlayer.getCurrentPosition();
+        }
+
+    };
+
+    private void updateSeekbar() {
+
+        mSeekBar.setProgress(mMediaPlayer.getCurrentPosition());
+        mHandler.postDelayed(update, 1000);
+
+
+
     }
+
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    private void setPlay(){
-        position = (position+1)%mMusicList.size();
+    private void setPlay() {
+        position = (position + 1) % mMusicList.size();
         Uri musicUri = mMusicList.get(position).getMusicUri();
         mMediaPlayer = MediaPlayer.create(Objects.requireNonNull(getActivity()).getApplicationContext(), musicUri);
         mMusicName.setText(mMusicList.get(position).getMusicName());
@@ -223,7 +224,8 @@ public class PlayMusicFragment extends Fragment {
         mImageView.setImageURI(coveMusic);
         mMediaPlayer.start();
     }
-    private void listener(){
+
+    private void listener() {
         mSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -241,7 +243,8 @@ public class PlayMusicFragment extends Fragment {
             }
         });
     }
-    private void automaticPlay(){
+
+    private void automaticPlay() {
         mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
             @Override
