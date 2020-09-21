@@ -30,7 +30,7 @@ public class ActivityMainPage extends AppCompatActivity {
     }
 
     private void setUI() {
-        FragmentStateAdapter adapter = new pagerAdapter(this);
+        FragmentStateAdapter adapter = new PagerAdapter(this);
         mTaskViewPager.setAdapter(adapter);
         TabLayout tabLayout = findViewById(R.id.tab_layout);
         TabLayoutMediator tabLayoutMediator = new TabLayoutMediator(
@@ -58,32 +58,33 @@ public class ActivityMainPage extends AppCompatActivity {
         tabLayoutMediator.attach();
 
     }
-}
+    private class PagerAdapter extends FragmentStateAdapter {
 
-class pagerAdapter extends FragmentStateAdapter {
+        public PagerAdapter(@NonNull FragmentActivity fragmentActivity) {
+            super(fragmentActivity);
+        }
 
-    public pagerAdapter(@NonNull FragmentActivity fragmentActivity) {
-        super(fragmentActivity);
-    }
-
-    @NonNull
-    @Override
-    public Fragment createFragment(int position) {
-        switch (position) {
-            case 0: {
-                return MainFragment.newInstance("");
-            }
-            case 1: {
-                return MainFragment.newInstance(" ");
-            }
-            default: {
-                return MainFragment.newInstance("  ");
+        @NonNull
+        @Override
+        public Fragment createFragment(int position) {
+            switch (position) {
+                case 0: {
+                    return MainFragment.newInstance("");
+                }
+                case 1: {
+                    return MainFragment.newInstance(" ");
+                }
+                default: {
+                    return MainFragment.newInstance("  ");
+                }
             }
         }
-    }
 
-    @Override
-    public int getItemCount() {
-        return 3;
+        @Override
+        public int getItemCount() {
+            return 3;
+        }
     }
 }
+
+
