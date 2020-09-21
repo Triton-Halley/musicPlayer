@@ -1,5 +1,6 @@
 package com.example.MusicPlayer.Repository;
 
+import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
@@ -8,7 +9,10 @@ import android.media.MediaMetadata;
 import android.media.MediaParser;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Build;
 import android.provider.MediaStore;
+
+import androidx.annotation.RequiresApi;
 
 import com.example.MusicPlayer.Model.Music;
 
@@ -20,6 +24,7 @@ import java.util.UUID;
 
 public class MusicList  {
     private Context mContext ;
+    @SuppressLint("StaticFieldLeak")
     private static MusicList sMusicList ;
     public static MusicList getInstance(Context context){
 
@@ -31,9 +36,10 @@ public class MusicList  {
     private MusicList(Context context) {
         mContext = context ;
     }
-    private List<Music> mMusicList ;
+
+    @RequiresApi(api = Build.VERSION_CODES.R)
     public List<Music>  getMusicList(){
-        mMusicList = new ArrayList<>();
+        List<Music> musicList = new ArrayList<>();
         ContentResolver contentResolver = mContext.getContentResolver();
         Uri musicsUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
         Cursor cursor = contentResolver.query(musicsUri,
@@ -46,7 +52,6 @@ public class MusicList  {
             int musicArtist = cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST);
             int musicDuration = cursor.getColumnIndex(MediaStore.Audio.Media.DURATION);
             // TODO
-            Uri cover = Uri.parse(MediaMetadata.METADATA_KEY_ALBUM_ART_URI) ;
 
             do{
                 String currentTitle = cursor.getString(musicTitle);
@@ -58,9 +63,9 @@ public class MusicList  {
                         ,Long.parseLong(trackId));
                 music.setMusicUri(musicUri);
 //                music.setMusicUri(MediaStore.Audio.Media.getContentUri(currentTitle));
-                mMusicList.add(music);
+                musicList.add(music);
             }while (cursor.moveToNext());
         }
-        return mMusicList ;
+        return musicList;
     }
 }
