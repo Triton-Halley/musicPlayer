@@ -1,49 +1,63 @@
 package com.example.MusicPlayer.Controller.Fragment;
 
+import android.graphics.PorterDuff;
+import android.media.MediaMetadata;
+import android.media.MediaPlayer;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 
+import androidx.annotation.RequiresApi;
 import androidx.fragment.app.Fragment;
 
+import android.os.Environment;
+import android.os.Parcelable;
+import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.SeekBar;
+import android.widget.TextView;
 
+import com.example.MusicPlayer.Model.Music;
 import com.example.MusicPlayer.R;
+import com.mikhaellopez.circularimageview.CircularImageView;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link PlayMusicFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+
 public class PlayMusicFragment extends Fragment {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
-
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
-
+    private Button play;
+    private Button next;
+    private Button previous;
+    private Button shuffle;
+    private Button repeatOne;
+    private Button repeatAll;
+    private SeekBar mSeekBar;
+    private ImageView mImageView;
+    private MediaPlayer mMediaPlayer;
+    private Music mMusic;
+    private Thread updateSeekbar;
+    private int position  ;
+    private List<Music> mMusicList;
+    private int pauseCurrentPosition;
+    private TextView mMusicName ;
     public PlayMusicFragment() {
         // Required empty public constructor
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment PlayMusicFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static PlayMusicFragment newInstance(String param1, String param2) {
+
+    public static PlayMusicFragment newInstance(Music music, List<Music> musicList,int pos) {
         PlayMusicFragment fragment = new PlayMusicFragment();
         Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
+        args.putParcelable("ARGS_MUSIC", music);
+        args.putParcelableArrayList("ARGS_MUSIC_LIST", (ArrayList<? extends Parcelable>) musicList);
+        args.putInt("ARGS_MUSIC_POS",pos);
         fragment.setArguments(args);
         return fragment;
     }
@@ -51,16 +65,181 @@ public class PlayMusicFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
+        mMusic = (Music) getArguments().getParcelable("ARGS_MUSIC");
+        mMusicList = getArguments().getParcelableArrayList("ARGS_MUSIC_LIST");
+        position = getArguments().getInt("ARGS_MUSIC_POS");
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_play_music, container, false);
+        View view = inflater.inflate(R.layout.fragment_play_music, container, false);
+        findViews(view);
+        mMusicName.setText(mMusic.getMusicName());
+        setListener();
+        listener();
+
+        return view;
+    }
+
+//    @RequiresApi(api = Build.VERSION_CODES.M)
+    private void startSeekBar() {
+        updateSeekbar.start();
+        mSeekBar.getProgressDrawable().setColorFilter(getResources().getColor(R.color.seekBarColor),
+                PorterDuff.Mode.MULTIPLY);
+        mSeekBar.getThumb().setColorFilter(getResources().getColor(R.color.seekBarColor),
+                PorterDuff.Mode.SRC_IN);
+//        mSeekBar.getThumb().setLayoutDirection();
+
+    }
+
+    private void findViews(View view) {
+        play = view.findViewById(R.id.play_pause);
+        next = view.findViewById(R.id.next);
+        previous=view.findViewById(R.id.previous);
+        mMusicName = view.findViewById(R.id.music_name);
+        mSeekBar = view.findViewById(R.id.music_Seekbar);
+        mImageView = view.findViewById(R.id.circularImageView);
+    }
+
+    private void setListener() {
+        play.setOnClickListener(new View.OnClickListener() {
+            @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+            @Override
+            public void onClick(View view) {
+                if (mMediaPlayer == null) {
+                    play.setBackgroundResource(R.drawable.baseline_pause_black_18);
+                    mMediaPlayer = MediaPlayer.create(getActivity().getApplicationContext(), mMusic.getMusicUri());
+                    Uri coveMusic = Uri.parse(MediaMetadata.METADATA_KEY_ALBUM_ART_URI);
+                    mImageView.setImageURI(coveMusic);
+                    mSeekBar.setMax(mMediaPlayer.getDuration());
+                    mMediaPlayer.start();
+                    updateSeekbar();
+                    startSeekBar();
+                    automaticPlay();
+                    pauseCurrentPosition = mMediaPlayer.getCurrentPosition();
+
+                } else if (!mMediaPlayer.isPlaying()) {
+                    play.setBackgroundResource(R.drawable.baseline_pause_black_18);
+                    mMediaPlayer.seekTo(pauseCurrentPosition);
+                    mSeekBar.setMax(mMediaPlayer.getDuration());
+                    mMediaPlayer.start();
+                    updateSeekbar();
+                    startSeekBar();
+                    automaticPlay();
+                } else if (mMediaPlayer.isPlaying()) {
+                    play.setBackgroundResource(R.drawable.baseline_play_arrow_black_18);
+                    pauseCurrentPosition = mMediaPlayer.getCurrentPosition();
+                    mSeekBar.setMax(mMediaPlayer.getDuration());
+                    updateSeekbar();
+                    mMediaPlayer.pause();
+                }
+            }
+        });
+        next.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                mMediaPlayer.stop();
+                mMediaPlayer.release();
+                position = (position+1)%mMusicList.size();
+                Uri musicUri = mMusicList.get(position).getMusicUri();
+                Uri coveMusic = Uri.parse(MediaMetadata.METADATA_KEY_ALBUM_ART_URI);
+                mImageView.setImageURI(coveMusic);
+                mMediaPlayer = MediaPlayer.create(getActivity().getApplicationContext(), musicUri);
+                mMusicName.setText(mMusicList.get(position).getMusicName());
+                mMediaPlayer.start();
+
+
+            }
+        });
+        previous.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mMediaPlayer.stop();
+                mMediaPlayer.release();
+                position = ((position-1)<0)?(mMusicList.size()-1):(position-1);
+                Uri coveMusic = Uri.parse(MediaMetadata.METADATA_KEY_ALBUM_ART_URI);
+                mImageView.setImageURI(coveMusic);
+                Uri musicUri = mMusicList.get(position).getMusicUri();
+                mMediaPlayer = MediaPlayer.create(getActivity().getApplicationContext(), musicUri);
+                mMusicName.setText(mMusicList.get(position).getMusicName());
+                mMediaPlayer.start();
+
+            }
+        });
+
+    }
+
+    /*private Music findNextMusic() {
+        for (int i = 0; i < mMusicList.size(); i++) {
+            if (mMusicList.get(i).getMusicId() == mMusic.getMusicId()) {
+                if (i == mMusicList.size() - 1) {
+                    i = 0;
+                    return mMusicList.get(i);
+                } else {
+                    return mMusicList.get(i + 1);
+                }
+
+            } else if (i == mMusicList.size() - 1) {
+
+            }
+        }
+        return mMusic;
+    }*/
+    private void updateSeekbar(){
+        updateSeekbar = new Thread(){
+            @Override
+            public void run() {
+                int totalDuration = mMediaPlayer.getDuration();
+                int currentPosition = 0 ;
+                while (currentPosition<totalDuration){
+                    try {
+                        sleep(500);
+                        currentPosition = mMediaPlayer.getCurrentPosition();
+                        mSeekBar.setProgress(currentPosition);
+                    }catch (InterruptedException e){
+                        e.printStackTrace();
+                    }
+                }
+            }
+        };
+    }
+    private void setPlay(){
+        position = (position+1)%mMusicList.size();
+        Uri musicUri = mMusicList.get(position).getMusicUri();
+        mMediaPlayer = MediaPlayer.create(getActivity().getApplicationContext(), musicUri);
+        mMusicName.setText(mMusicList.get(position).getMusicName());
+        Uri coveMusic = Uri.parse(MediaMetadata.METADATA_KEY_ALBUM_ART_URI);
+        mImageView.setImageURI(coveMusic);
+        mMediaPlayer.start();
+    }
+    private void listener(){
+        mSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                mMediaPlayer.seekTo(seekBar.getProgress());
+            }
+        });
+    }
+    private void automaticPlay(){
+        mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                setPlay();
+            }
+        });
     }
 }
+
