@@ -29,6 +29,7 @@
         android:hint="@string/artist"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/music_title" />
+        app:layout_constraintTop_toBottomOf="@+id/music_title"
+        style="?android:listDivider" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
