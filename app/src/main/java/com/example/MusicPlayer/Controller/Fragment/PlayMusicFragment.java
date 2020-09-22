@@ -1,7 +1,10 @@
 package com.example.MusicPlayer.Controller.Fragment;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.PorterDuff;
 import android.media.MediaMetadata;
+import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
@@ -49,7 +52,7 @@ public class PlayMusicFragment extends Fragment {
     private int pauseCurrentPosition;
     private TextView mMusicName;
     private Handler mHandler = new Handler();
-
+    MediaMetadataRetriever mmr = new MediaMetadataRetriever();
     public PlayMusicFragment() {
         // Required empty public constructor
     }
@@ -90,14 +93,11 @@ public class PlayMusicFragment extends Fragment {
         return view;
     }
 
-    //    @RequiresApi(api = Build.VERSION_CODES.M)
     private void startSeekBar() {
         mSeekBar.getProgressDrawable().setColorFilter(getResources().getColor(R.color.seekBarColor),
                 PorterDuff.Mode.MULTIPLY);
         mSeekBar.getThumb().setColorFilter(getResources().getColor(R.color.seekBarColor),
                 PorterDuff.Mode.SRC_IN);
-//        mSeekBar.getThumb().setLayoutDirection();
-
     }
 
     private void findViews(View view) {
@@ -107,6 +107,7 @@ public class PlayMusicFragment extends Fragment {
         mMusicName = view.findViewById(R.id.music_name);
         mSeekBar = view.findViewById(R.id.music_Seekbar);
         mImageView = view.findViewById(R.id.circularImageView);
+        getMusicCover();
     }
 
     private void setListener() {
@@ -116,9 +117,7 @@ public class PlayMusicFragment extends Fragment {
             public void onClick(View view) {
                 if (mMediaPlayer == null) {
                     play.setBackgroundResource(R.drawable.baseline_pause_black_18);
-                    mMediaPlayer = MediaPlayer.create(Objects.requireNonNull(getActivity()).getApplicationContext(), mMusic.getMusicUri());
-                    Uri coveMusic = Uri.parse(MediaMetadata.METADATA_KEY_ALBUM_ART_URI);
-                    mImageView.setImageURI(coveMusic);
+                    defineMediaPlayer();
                     mSeekBar.setMax(mMediaPlayer.getDuration());
                     mMediaPlayer.start();
                     updateSeekbar();
@@ -147,7 +146,9 @@ public class PlayMusicFragment extends Fragment {
             @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
             @Override
             public void onClick(View v) {
-
+                if (mMediaPlayer==null){
+                    defineMediaPlayer();
+                }
                 mMediaPlayer.stop();
                 mMediaPlayer.release();
                 position = (position + 1) % mMusicList.size();
@@ -156,7 +157,7 @@ public class PlayMusicFragment extends Fragment {
                 mImageView.setImageURI(coveMusic);
                 mMediaPlayer = MediaPlayer.create(Objects.requireNonNull(getActivity()).getApplicationContext(), musicUri);
                 mMusicName.setText(mMusicList.get(position).getMusicName());
-                mMediaPlayer.start();
+                getMusicCover();
 
 
             }
@@ -165,6 +166,9 @@ public class PlayMusicFragment extends Fragment {
             @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
             @Override
             public void onClick(View v) {
+                if (mMediaPlayer==null){
+                    defineMediaPlayer();
+                }
                 mMediaPlayer.stop();
                 mMediaPlayer.release();
                 position = ((position - 1) < 0) ? (mMusicList.size() - 1) : (position - 1);
@@ -173,11 +177,22 @@ public class PlayMusicFragment extends Fragment {
                 Uri musicUri = mMusicList.get(position).getMusicUri();
                 mMediaPlayer = MediaPlayer.create(Objects.requireNonNull(getActivity()).getApplicationContext(), musicUri);
                 mMusicName.setText(mMusicList.get(position).getMusicName());
-                mMediaPlayer.start();
+                getMusicCover();
 
             }
         });
 
+    }
+
+    private void defineMediaPlayer() {
+        mMediaPlayer = MediaPlayer.create(Objects.requireNonNull(getActivity()).getApplicationContext(), mMusic.getMusicUri());
+    }
+
+    private void getMusicCover() {
+        mmr.setDataSource(getActivity().getApplicationContext(),mMusic.getMusicUri());
+        byte [] data = mmr.getEmbeddedPicture();
+        Bitmap bitmap = BitmapFactory.decodeByteArray(data,0,data.length);
+        mImageView.setImageBitmap(bitmap);
     }
 
     /*private Music findNextMusic() {
