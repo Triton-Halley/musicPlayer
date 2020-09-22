@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/background"
+    android:background="@drawable/background_gradient"
     tools:context=".Controller.Fragment.PlayMusicFragment">
 
     <com.mikhaellopez.circularimageview.CircularImageView
@@ -15,7 +15,7 @@
         android:layout_marginTop="96dp"
         android:layout_marginEnd="16dp"
         android:src="@drawable/album_art"
-        app:civ_border_color="#000"
+        app:civ_border_color="#FFFF"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -46,7 +46,7 @@
         android:id="@+id/play_pause"
         android:layout_width="50dp"
         android:layout_height="40dp"
-        android:layout_marginBottom="96dp"
+        android:layout_marginBottom="64dp"
         android:background="@drawable/baseline_play_arrow_black_18"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/next"
@@ -58,7 +58,7 @@
         android:id="@+id/next"
         android:layout_width="50dp"
         android:layout_height="40dp"
-        android:layout_marginBottom="96dp"
+        android:layout_marginBottom="64dp"
         android:background="@drawable/baseline_skip_next_black_18"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/repeat_one_all"
@@ -70,7 +70,7 @@
         android:id="@+id/previous"
         android:layout_width="50dp"
         android:layout_height="40dp"
-        android:layout_marginBottom="96dp"
+        android:layout_marginBottom="64dp"
         android:background="@drawable/baseline_skip_previous_black_18"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/play_pause"
@@ -82,7 +82,7 @@
         android:id="@+id/shuffle"
         android:layout_width="40dp"
         android:layout_height="40dp"
-        android:layout_marginBottom="96dp"
+        android:layout_marginBottom="64dp"
         android:background="@drawable/baseline_shuffle_black_18"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/previous"
@@ -95,12 +95,36 @@
         android:layout_width="40dp"
         android:layout_height="40dp"
         android:layout_marginEnd="16dp"
-        android:layout_marginBottom="96dp"
+        android:layout_marginBottom="64dp"
         android:background="@drawable/baseline_repeat_black_18"
-        android:text="@string/a"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/next"
         tools:ignore="MissingConstraints" />
+
+    <TextView
+        android:id="@+id/currentDuration"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
+        android:text="@string/zero"
+        android:textSize="18sp"
+        app:layout_constraintHorizontal_chainStyle="spread"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/music_Seekbar" />
+
+    <TextView
+        android:id="@+id/totalDuration"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="318dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="16dp"
+        android:text="@string/zero"
+        android:textSize="18sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/currentDuration"
+        app:layout_constraintTop_toBottomOf="@+id/music_Seekbar" />
 </androidx.constraintlayout.widget.ConstraintLayout>

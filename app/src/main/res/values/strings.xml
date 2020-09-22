@@ -5,4 +5,5 @@
     <string name="a">A</string>
     <string name="music_title">Music_Title</string>
     <string name="artist">Artist</string>
+    <string name="zero">0:00</string>
 </resources>

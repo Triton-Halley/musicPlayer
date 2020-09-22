@@ -41,8 +41,7 @@ public class PlayMusicFragment extends Fragment {
     private Button next;
     private Button previous;
     private Button shuffle;
-    private Button repeatOne;
-    private Button repeatAll;
+    private Button repeatMusic;
     private SeekBar mSeekBar;
     private ImageView mImageView;
     private MediaPlayer mMediaPlayer;
@@ -51,8 +50,13 @@ public class PlayMusicFragment extends Fragment {
     private List<Music> mMusicList;
     private int pauseCurrentPosition;
     private TextView mMusicName;
+    private TextView mCurrentDuration;
+    private TextView mTotalDuration;
     private Handler mHandler = new Handler();
     MediaMetadataRetriever mmr = new MediaMetadataRetriever();
+    private static boolean SHUFFLE_STATE = false;
+    private static boolean REPEAT_STATE = false; // it's repeat all now
+
     public PlayMusicFragment() {
         // Required empty public constructor
     }
@@ -107,7 +111,14 @@ public class PlayMusicFragment extends Fragment {
         mMusicName = view.findViewById(R.id.music_name);
         mSeekBar = view.findViewById(R.id.music_Seekbar);
         mImageView = view.findViewById(R.id.circularImageView);
-        getMusicCover();
+        shuffle = view.findViewById(R.id.shuffle);
+        repeatMusic = view.findViewById(R.id.repeat_one_all);
+        mTotalDuration = view.findViewById(R.id.totalDuration);
+        mCurrentDuration = view.findViewById(R.id.currentDuration);;
+        repeatMusic.setText("A");
+        defineMediaPlayer();
+        mTotalDuration.setText(millSecToTimer((long) mMediaPlayer.getDuration()));
+        getMusicCover(mMusic.getMusicUri());
     }
 
     private void setListener() {
@@ -117,7 +128,6 @@ public class PlayMusicFragment extends Fragment {
             public void onClick(View view) {
                 if (mMediaPlayer == null) {
                     play.setBackgroundResource(R.drawable.baseline_pause_black_18);
-                    defineMediaPlayer();
                     mSeekBar.setMax(mMediaPlayer.getDuration());
                     mMediaPlayer.start();
                     updateSeekbar();
@@ -146,18 +156,17 @@ public class PlayMusicFragment extends Fragment {
             @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
             @Override
             public void onClick(View v) {
-                if (mMediaPlayer==null){
+                if (mMediaPlayer == null) {
                     defineMediaPlayer();
                 }
                 mMediaPlayer.stop();
                 mMediaPlayer.release();
                 position = (position + 1) % mMusicList.size();
                 Uri musicUri = mMusicList.get(position).getMusicUri();
-                Uri coveMusic = Uri.parse(MediaMetadata.METADATA_KEY_ALBUM_ART_URI);
-                mImageView.setImageURI(coveMusic);
+                getMusicCover(musicUri);
                 mMediaPlayer = MediaPlayer.create(Objects.requireNonNull(getActivity()).getApplicationContext(), musicUri);
                 mMusicName.setText(mMusicList.get(position).getMusicName());
-                getMusicCover();
+                play.setBackgroundResource(R.drawable.baseline_play_arrow_black_18);
 
 
             }
@@ -166,32 +175,66 @@ public class PlayMusicFragment extends Fragment {
             @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
             @Override
             public void onClick(View v) {
-                if (mMediaPlayer==null){
+                if (mMediaPlayer == null) {
                     defineMediaPlayer();
                 }
                 mMediaPlayer.stop();
                 mMediaPlayer.release();
                 position = ((position - 1) < 0) ? (mMusicList.size() - 1) : (position - 1);
-                Uri coveMusic = Uri.parse(MediaMetadata.METADATA_KEY_ALBUM_ART_URI);
-                mImageView.setImageURI(coveMusic);
+
                 Uri musicUri = mMusicList.get(position).getMusicUri();
                 mMediaPlayer = MediaPlayer.create(Objects.requireNonNull(getActivity()).getApplicationContext(), musicUri);
                 mMusicName.setText(mMusicList.get(position).getMusicName());
-                getMusicCover();
+                play.setBackgroundResource(R.drawable.baseline_play_arrow_black_18);
+                getMusicCover(musicUri);
 
             }
         });
+        shuffle.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (SHUFFLE_STATE){
+                    SHUFFLE_STATE = false;
+                    shuffle.setBackgroundResource(R.drawable.baseline_shuffle_black_18);
+                }else {
+                    SHUFFLE_STATE = true;
+                    shuffle.setBackgroundResource(R.drawable.baseline_shuffle_white_18);
+                }
+            }
+        });
+        repeatMusic.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //repeat all set now
+                if (REPEAT_STATE){
+                    REPEAT_STATE = false;
+                    repeatMusic.setBackgroundResource(R.drawable.baseline_repeat_black_18);
+                    repeatMusic.setText("A");
+//                    repeatMusic.setTextSize();
+
+                }
+                //repeat one set now
+                else{
+                    repeatMusic.setText("");
+                    REPEAT_STATE = true;
+                    repeatMusic.setBackgroundResource(R.drawable.baseline_repeat_one_black_18);
+                }
+
+            }
+        });
+
 
     }
 
     private void defineMediaPlayer() {
         mMediaPlayer = MediaPlayer.create(Objects.requireNonNull(getActivity()).getApplicationContext(), mMusic.getMusicUri());
+
     }
 
-    private void getMusicCover() {
-        mmr.setDataSource(getActivity().getApplicationContext(),mMusic.getMusicUri());
-        byte [] data = mmr.getEmbeddedPicture();
-        Bitmap bitmap = BitmapFactory.decodeByteArray(data,0,data.length);
+    private void getMusicCover(Uri musicUri) {
+        mmr.setDataSource(getActivity().getApplicationContext(), musicUri);
+        byte[] data = mmr.getEmbeddedPicture();
+        Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
         mImageView.setImageBitmap(bitmap);
     }
 
@@ -215,7 +258,9 @@ public class PlayMusicFragment extends Fragment {
         @Override
         public void run() {
             updateSeekbar();
-//            long currentDuration = mMediaPlayer.getCurrentPosition();
+            long currentDuration = mMediaPlayer.getCurrentPosition();
+            mCurrentDuration.setText(millSecToTimer(currentDuration));
+
         }
 
     };
@@ -226,17 +271,23 @@ public class PlayMusicFragment extends Fragment {
         mHandler.postDelayed(update, 1000);
 
 
-
     }
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    private void setPlay() {
-        position = (position + 1) % mMusicList.size();
+    private void setPlay(boolean RepeatState) {
+        if (!RepeatState) {
+            position = (position + 1) % mMusicList.size();
+        }
+        playNextMusicAuto(position);
+
+    }
+
+    private void playNextMusicAuto(int position) {
         Uri musicUri = mMusicList.get(position).getMusicUri();
         mMediaPlayer = MediaPlayer.create(Objects.requireNonNull(getActivity()).getApplicationContext(), musicUri);
         mMusicName.setText(mMusicList.get(position).getMusicName());
-        Uri coveMusic = Uri.parse(MediaMetadata.METADATA_KEY_ALBUM_ART_URI);
-        mImageView.setImageURI(coveMusic);
+        getMusicCover(musicUri);
+        play.setBackgroundResource(R.drawable.baseline_pause_black_18);
         mMediaPlayer.start();
     }
 
@@ -264,9 +315,45 @@ public class PlayMusicFragment extends Fragment {
             @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
             @Override
             public void onCompletion(MediaPlayer mp) {
-                setPlay();
+                if (SHUFFLE_STATE && REPEAT_STATE) {
+                    setPlay(true);
+                } else if (SHUFFLE_STATE) {
+                    playNextMusicAuto(getRandomPosition());
+                } else if (REPEAT_STATE) {
+                    setPlay(true);
+                } else {
+                    //default value state = false
+                    setPlay(false);
+                }
             }
         });
+    }
+
+    private int getRandomPosition() {
+        int min = 0;
+        int max = mMusicList.size();
+        int range = max - min + 1;
+        int rand = (int) (Math.random() * range) + min;
+        return rand;
+    }
+
+    private String millSecToTimer(long milliSeconds){
+        String timerStr = "";
+        String SecondStr ;
+        int hours = (int)(milliSeconds/(1000*60*60));
+        int minute = (int)(milliSeconds%(1000*60*60))/(1000*60);
+        int seconds = (int)((milliSeconds%(1000*60*60))%(1000*60)/1000);
+        if (hours>0){
+            timerStr = hours+":";
+        }
+        if (seconds<10){
+            SecondStr = "0"+seconds;
+        }
+        else {
+            SecondStr = ""+seconds;
+        }
+        timerStr = timerStr+minute+":"+SecondStr;
+        return timerStr;
     }
 }
 
