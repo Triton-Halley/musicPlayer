@@ -1,11 +1,9 @@
 package com.example.MusicPlayer.Controller.Fragment;
 
-import android.content.ContentResolver;
 import android.content.Intent;
-import android.database.Cursor;
-import android.media.MediaMetadata;
-import android.media.MediaPlayer;
-import android.media.session.MediaSession;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -16,34 +14,33 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
+import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.example.MusicPlayer.Controller.Activity.ActivityMainPage;
 import com.example.MusicPlayer.Controller.Activity.ActivityPlayMusicPage;
 import com.example.MusicPlayer.Model.Music;
 import com.example.MusicPlayer.R;
 import com.example.MusicPlayer.Repository.MusicList;
 
 import java.util.List;
-import java.util.Objects;
 
-public class MainFragment extends Fragment {
+public class ListOfMusicFragment extends Fragment {
     private RecyclerView mRecyclerView ;
     private List<Music> mMusicList ;
     private MusicAdapter mAdapter;
     private MusicList mRepository ;
-    public MainFragment() {
+    public static final String ARGS_TABS ="ARGS_TABS";
+    MediaMetadataRetriever mmr = new MediaMetadataRetriever();
+    public ListOfMusicFragment() {
         // Required empty public constructor
     }
 
 
-    public static MainFragment newInstance(String tabs) {
-        MainFragment fragment = new MainFragment();
+    public static ListOfMusicFragment newInstance() {
+        ListOfMusicFragment fragment = new ListOfMusicFragment();
         Bundle args = new Bundle();
         fragment.setArguments(args);
         return fragment;
@@ -55,6 +52,7 @@ public class MainFragment extends Fragment {
         mRepository = MusicList.getInstance(getActivity());
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.R)
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -68,9 +66,11 @@ public class MainFragment extends Fragment {
     private void findViews(View view){
         mRecyclerView = view.findViewById(R.id.recyclerview);
     }
+    @RequiresApi(api = Build.VERSION_CODES.R)
     private void getMusicList(){
         mMusicList =mRepository.getMusicList();
     }
+    @RequiresApi(api = Build.VERSION_CODES.R)
     private void updateUI(){
         getMusicList();
         List<Music> musicList = mMusicList;
@@ -86,13 +86,14 @@ public class MainFragment extends Fragment {
     class musicHolder extends RecyclerView.ViewHolder{
         private Music mMusic ;
         private int position;
+        private ImageView mMusicImage;
         private TextView mMusicTitle;
         private TextView mMusicArtist;
         public musicHolder(@NonNull View itemView) {
             super(itemView);
             mMusicTitle = itemView.findViewById(R.id.music_title);
             mMusicArtist = itemView.findViewById(R.id.Artist_name);
-
+            mMusicImage= itemView.findViewById(R.id.music_cover);
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
@@ -105,8 +106,15 @@ public class MainFragment extends Fragment {
         public void bindMusic(Music music,int pos){
             mMusic = music ;
             position = pos ;
+            getMusicCover(music.getMusicUri());
             mMusicTitle.setText(music.getMusicName());
             mMusicArtist.setText(music.getArtistName());
+        }
+        private void getMusicCover(Uri musicUri) {
+            mmr.setDataSource(getActivity().getApplicationContext(), musicUri);
+            byte[] data = mmr.getEmbeddedPicture();
+            Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
+            mMusicImage.setImageBitmap(bitmap);
         }
     }
     class MusicAdapter extends RecyclerView.Adapter<musicHolder>{

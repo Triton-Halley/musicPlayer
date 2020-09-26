@@ -25,6 +25,7 @@ import android.widget.TextView;
 
 import com.example.MusicPlayer.Model.Music;
 import com.example.MusicPlayer.R;
+import com.example.MusicPlayer.Utils.PictureUtils;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -53,7 +54,7 @@ public class PlayMusicFragment extends Fragment {
     private TextView mCurrentDuration;
     private TextView mTotalDuration;
     private Handler mHandler = new Handler();
-    MediaMetadataRetriever mmr = new MediaMetadataRetriever();
+
     private static boolean SHUFFLE_STATE = false;
     private static boolean REPEAT_STATE = false; // it's repeat all now
 
@@ -166,6 +167,7 @@ public class PlayMusicFragment extends Fragment {
                 getMusicCover(musicUri);
                 mMediaPlayer = MediaPlayer.create(Objects.requireNonNull(getActivity()).getApplicationContext(), musicUri);
                 mMusicName.setText(mMusicList.get(position).getMusicName());
+                mTotalDuration.setText(millSecToTimer((long) mMediaPlayer.getDuration()));
                 play.setBackgroundResource(R.drawable.baseline_play_arrow_black_18);
 
 
@@ -181,9 +183,9 @@ public class PlayMusicFragment extends Fragment {
                 mMediaPlayer.stop();
                 mMediaPlayer.release();
                 position = ((position - 1) < 0) ? (mMusicList.size() - 1) : (position - 1);
-
                 Uri musicUri = mMusicList.get(position).getMusicUri();
                 mMediaPlayer = MediaPlayer.create(Objects.requireNonNull(getActivity()).getApplicationContext(), musicUri);
+                mTotalDuration.setText(millSecToTimer((long) mMediaPlayer.getDuration()));
                 mMusicName.setText(mMusicList.get(position).getMusicName());
                 play.setBackgroundResource(R.drawable.baseline_play_arrow_black_18);
                 getMusicCover(musicUri);
@@ -232,9 +234,8 @@ public class PlayMusicFragment extends Fragment {
     }
 
     private void getMusicCover(Uri musicUri) {
-        mmr.setDataSource(getActivity().getApplicationContext(), musicUri);
-        byte[] data = mmr.getEmbeddedPicture();
-        Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
+        Bitmap bitmap =PictureUtils.getScaledBitmap(musicUri,getActivity(),mImageView.getMaxWidth()
+                ,mImageView.getMaxHeight());
         mImageView.setImageBitmap(bitmap);
     }
 
@@ -288,6 +289,7 @@ public class PlayMusicFragment extends Fragment {
         mMusicName.setText(mMusicList.get(position).getMusicName());
         getMusicCover(musicUri);
         play.setBackgroundResource(R.drawable.baseline_pause_black_18);
+        mTotalDuration.setText(millSecToTimer((long) mMediaPlayer.getDuration()));
         mMediaPlayer.start();
     }
 
@@ -295,17 +297,16 @@ public class PlayMusicFragment extends Fragment {
         mSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-
             }
 
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
-
             }
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
                 mMediaPlayer.seekTo(seekBar.getProgress());
+                mCurrentDuration.setText(millSecToTimer(mMediaPlayer.getCurrentPosition()));
             }
         });
     }
@@ -325,6 +326,7 @@ public class PlayMusicFragment extends Fragment {
                     //default value state = false
                     setPlay(false);
                 }
+
             }
         });
     }
