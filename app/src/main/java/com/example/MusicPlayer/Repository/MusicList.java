@@ -57,6 +57,7 @@ public class MusicList  {
                 String currentTitle = cursor.getString(musicTitle);
                 String currentArtist = cursor.getString(musicArtist);
                 String trackId = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media._ID));
+
                 long currentDuration = cursor.getLong(musicDuration);
                 Music music = new Music(currentTitle,currentArtist,currentDuration, UUID.randomUUID());
                 Uri musicUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
@@ -67,5 +68,48 @@ public class MusicList  {
             }while (cursor.moveToNext());
         }
         return musicList;
+    }
+    public List<String> getArtistList(){
+         List<String> musicArtists = new ArrayList<>();
+        ContentResolver contentResolver = mContext.getContentResolver();
+        Uri musicsUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+        Cursor cursor = contentResolver.query(musicsUri,
+                null,
+                null,
+                null,
+                null);
+        if (cursor!=null && cursor.moveToFirst()){
+            int musicArtist = cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST);
+
+            // TODO
+
+            do{
+                String currentArtist = cursor.getString(musicArtist);
+                musicArtists.add(currentArtist);
+            }while (cursor.moveToNext());
+        }
+        return musicArtists;
+    }
+    @RequiresApi(api = Build.VERSION_CODES.R)
+    public List<String> getAlbums(){
+        List<String> musicAlbums = new ArrayList<>();
+        ContentResolver contentResolver = mContext.getContentResolver();
+        Uri musicsUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+        @SuppressLint("Recycle") Cursor cursor = contentResolver.query(musicsUri,
+                null,
+                null,
+                null,
+                null);
+        if (cursor!=null && cursor.moveToFirst()){
+            int musicArtist = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM);
+
+            // TODO
+
+            do{
+                String currentAlbum = cursor.getString(musicArtist);
+                musicAlbums.add(currentAlbum);
+            }while (cursor.moveToNext());
+        }
+        return musicAlbums;
     }
 }
