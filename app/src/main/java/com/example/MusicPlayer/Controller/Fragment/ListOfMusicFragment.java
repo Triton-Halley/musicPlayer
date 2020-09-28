@@ -10,6 +10,7 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -26,6 +27,7 @@ import com.example.MusicPlayer.R;
 import com.example.MusicPlayer.Repository.MusicList;
 
 import java.util.List;
+import java.util.Objects;
 
 public class ListOfMusicFragment extends Fragment {
     private RecyclerView mRecyclerView ;
@@ -69,6 +71,8 @@ public class ListOfMusicFragment extends Fragment {
     @RequiresApi(api = Build.VERSION_CODES.R)
     private void getMusicList(){
         mMusicList =mRepository.getMusicList();
+        String subTitle = String.valueOf(mMusicList.size());
+        ((AppCompatActivity)getActivity()).getSupportActionBar().setSubtitle(subTitle +" Tracks" );
     }
     @RequiresApi(api = Build.VERSION_CODES.R)
     private void updateUI(){
@@ -111,10 +115,15 @@ public class ListOfMusicFragment extends Fragment {
             mMusicArtist.setText(music.getArtistName());
         }
         private void getMusicCover(Uri musicUri) {
-            mmr.setDataSource(getActivity().getApplicationContext(), musicUri);
+            mmr.setDataSource(Objects.requireNonNull(getActivity()).getApplicationContext(), musicUri);
             byte[] data = mmr.getEmbeddedPicture();
-            Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
-            mMusicImage.setImageBitmap(bitmap);
+            if (data!=null){
+                Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
+                mMusicImage.setImageBitmap(bitmap);
+            }else{
+                mMusicImage.setBackgroundResource(R.drawable.white_note_music);
+            }
+
         }
     }
     class MusicAdapter extends RecyclerView.Adapter<musicHolder>{

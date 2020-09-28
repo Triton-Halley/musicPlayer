@@ -42,7 +42,7 @@ public class MusicList  {
         List<Music> musicList = new ArrayList<>();
         ContentResolver contentResolver = mContext.getContentResolver();
         Uri musicsUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-        Cursor cursor = contentResolver.query(musicsUri,
+        @SuppressLint("Recycle") Cursor cursor = contentResolver.query(musicsUri,
                 null,
                 null,
                 null,

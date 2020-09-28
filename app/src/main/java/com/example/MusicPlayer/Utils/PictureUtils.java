@@ -16,7 +16,6 @@ public class PictureUtils {
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.outWidth = maxWidth;
         options.outHeight = maxHeight;
-        Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length, options);
-        return bitmap;
+        return BitmapFactory.decodeByteArray(data, 0, data.length, options);
     }
 }
