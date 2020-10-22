@@ -8,6 +8,7 @@ import android.database.Cursor;
 import android.media.MediaMetadata;
 import android.media.MediaParser;
 import android.media.MediaPlayer;
+import android.media.session.MediaSession;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.MediaStore;
@@ -51,7 +52,6 @@ public class MusicList  {
             int musicTitle = cursor.getColumnIndex(MediaStore.Audio.Media.TITLE);
             int musicArtist = cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST);
             int musicDuration = cursor.getColumnIndex(MediaStore.Audio.Media.DURATION);
-            // TODO
 
             do{
                 String currentTitle = cursor.getString(musicTitle);
@@ -63,7 +63,7 @@ public class MusicList  {
                 Uri musicUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
                         ,Long.parseLong(trackId));
                 music.setMusicUri(musicUri);
-//                music.setMusicUri(MediaStore.Audio.Media.getContentUri(currentTitle));
+
                 musicList.add(music);
             }while (cursor.moveToNext());
         }

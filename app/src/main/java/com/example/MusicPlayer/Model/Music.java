@@ -14,6 +14,7 @@ public class Music implements Parcelable{
     private long duration ;
     private Uri musicUri ;
 
+
     protected Music(Parcel in) {
         musicName = in.readString();
         ArtistName = in.readString();
